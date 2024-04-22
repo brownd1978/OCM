@@ -1,0 +1,68 @@
+%
+%%%\documentclass[option]{webofc}
+%%% "twocolumn" for typesetting an article in two columns format (default one column)
+%
+\documentclass{webofc}
+\usepackage[varg]{txfonts}   % Web of Conferences font
+%
+% Put here some packages required or/and some personnal commands
+%
+\input{draftconfig}  % Enable additional annotations for draft mode.
+\newcommand{\ISDRAFT}{YES}      % Tell conditional formating that this is a draft.
+%\input{preamble}      % usepackage calls
+\graphicspath{{figures/}}
+\input{defs}
+%
+\begin{document}
+%
+\input{titlepage}           % Title page
+\input{abstract}
+%
+\maketitle
+\input{mu2eexp}
+\input{mu2eorg}
+\input{runplan}
+\input{overview}
+\input{datahandling}
+\input{simulation}
+\input{reconstruction}
+\input{calibration}
+\input{monitoring}
+\input{analysis}
+
+\input{databases}
+\input{codemanagement}
+\input{communication}
+
+\input{resources}
+
+Where should we describe the harvesting of online data?
+
+\appendix
+\input{timeline}
+\input{reqs} % this is temporary for reference only
+
+%
+% BibTeX or Biber users please use (the style is already called in the class, ensure that the "woc.bst" style is in your local directory)
+% \bibliography{name or your bibliography database}
+%
+% Non-BibTeX users please use
+%
+\begin{thebibliography}{}
+%
+% and use \bibitem to create references.
+%
+%\bibitem{RefJ}
+% Format for Journal Reference
+%Journal Author, Journal \textbf{Volume}, page numbers (year)
+% Format for books
+%\bibitem{RefB}
+%Book Author, \textit{Book title} (Publisher, place, year) page numbers
+\bibitem{Mu2e} Mu2e Technical Design report
+\end{thebibliography}
+
+\end{document}
+
+% end of file template.tex
+
+<div id='footer'><table width='100%'><tr><td class='right'><a href='http://fusioninventory.org/'><span class='copyright'>FusionInventory 9.1+1.0 | copyleft <img src='/glpi/plugins/fusioninventory/pics/copyleft.png'/>  2010-2016 by FusionInventory Team</span></a></td></tr></table></div>

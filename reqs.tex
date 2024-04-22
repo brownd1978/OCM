@@ -1,0 +1,34 @@
+A Computing Model is a bottoms up calculation of the time profile of computing resources needed by the experiment, starting now and extending until the final publication. The granularity of the time profile should be fine enough to identify peak usage needs. The level of detail should be appropriate for the maturity of the experiment and nearness to data taking.
+It should include our needs for:
+\begin{enumerate}
+  \item CPU
+    \begin{enumerate}
+      \item Broken down by type of usage (see below for the definition of “type of usage”).
+      \item Broken down by Fermigrid, OSG, HPC center and collaboration contributed CPU.
+      \item For Fermigrid and OSG usage, this should be expressed in terms of memory
+      \item Identify when there will be needs for jobs with unusually high memory needs.
+    \end{enumerate}
+
+  \item GPU and other non-CPU computing
+  \item Disk and tape needs
+    \begin{enumerate}
+      \item Broken down by type of usage
+      \item A bottoms up usage model that predicts the size of persistent dCache needed for
+        each workflow in order to minimize tape activity for transient files.
+    \end{enumerate}
+  \item Network
+    \begin{enumerate}
+      \item Broken down by type of usage Network bandwidth:
+      \item On-site
+      \item Wide area, to support use of off-site CPU resources, including resources out of
+        the country and collaborator contributed resources.
+    \end{enumerate}
+
+  \item  Databases
+    \begin{enumerate}
+      \item types of database.  For each type give:
+      \item What is its expected final size?
+      \item How often will it be updated?
+      \item Does it need to be served via QueryEngine?
+    \end{enumerate}
+\end{enumerate}
