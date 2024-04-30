@@ -1,0 +1,51 @@
+\section{Physics Analysis (Bertrand + Sophie + Andy)}
+\label{sec:analysis}
+%\textcolor{blue}{Scope: Describe existing analysis efforts methodologies.  Describe plans for a reference analysis.  Give an overview of techniques that we might apply, and an estimate of the scope of those in terms of data storage and processing needs.  Call out the use of AI/ML and possible use of hardware accelerators.}
+
+\subsection{General}
+\textcolor{red}{general concept} (Bertrand will do that)
+\subsection{Analysis NTuples}
+
+\subsubsection{Existing Frameworks}
+
+To conduct offline analysis the output of the Mu2e reconstruction is input into ntuples. These ntuples are both smaller in size and simpler in structure. The smaller size will reduce the need to prestage from tape, and the simpler structure means there is a shallower learning curve for new users to start analyzing the data. 
+
+Mu2e currently has two ntuple frameworks: TrkAna and Stntuple. Both output ROOT-based structures. The data can be organized into event rows, allowing simple analysis macros to be written in either ROOT (C/C++) or python. In addition, TrkAna allows track-based structuring, which is useful for calibration studies. Analysis groups have analysis frameworks that run over the ntuples to generate plots and perform fits. When developing these tools we have been concerned with maintaining interfaces to both ROOT and python. A common python environment is used to facilitate interoperability between analysis groups. We already maintain a ROOT installation, Mu2e/Offline is always built against a specified ROOT release.
+
+TrkAna is currently the only ntupling package implemented into our Production workflow. A Stntuple-based analysis framework was used for the Run-1 sensitivity estimate \cite{}. Other analysis frameworks are in development. We expect our analysis framework to evolve significantly in the coming months, with input from the entire collaboration and consideration of being able to interface with all modern analysis tools.
+
+\subsubsection{Machine Learning}
+
+Machine learning is used in multiple ways within the Mu2e software environment. \textcolor{red}{TMVA and Tensorflow, use of the SOFIE package, how is this integrated into TrkAna etc.}
+
+\subsubsection{Future Developments}
+
+We are currently investigating suitable alternatives to our existing framework, taking input from the entire collaboration. Some possible evolution include: exploring the ROOT-7 data tools (RNTuples), analysis facilities (e.g. Elastic Analysis Facilities).
+
+\textcolor{red}{discuss results of upcominmg survey?}
+
+
+\subsection{Reference Analysis}
+
+\subsubsection{Concept}
+As our reconstruction and simulation infrastructure evolves we need to be able to quantify any impact changes have on our physics reach. For that purpose, a reference analysis is being developed which will quantify the impact of reconstruction code updates. This simple analysis will also be used by analysis groups as cross-checks of their analysis frameworks.
+
+\subsubsection{Inputs}
+The reference analysis will take input from our standard analysis framework in the form of reconstructed Mock Data. Mock Data is developed using the output of large-scale production. We combine conversion signals (of a given conversion branching rate) with decay-in-orbit (DIO) tail backgrounds (reaching below the trigger threshold to 75 MeV/c), cosmic backgrounds (from either the CRY or CORSIKA generator), radiative pion and muon capture backgrounds and pile-up. These are then passed through our digitization and reconstruction framework to create ``data-like" samples. 
+
+
+\subsubsection{Outputs}
+
+\subsection{Offline Event Visualization}
+
+An event display is used to visualize reconstructed, or Monte Carlo, events. Three displays are currently used within the collaboration. The first uses a ROOT TApplication, the second uses ROOT's TEve class \cite{}, and the third (under development) uses ROOT's REve class \cite{}. REve is part of the the ROOT-7 development-level code within ROOT, it's designed and was informed by the .... report \cite{}. REve is developed by the CMS collaboration and will be maintained throughout the lifetime of the LHC. Mu2e has worked closely with the developers since 2022. The advantages of developing an REve-based display are that it can be used remotely via a web browser, removing the need for a VNC, it can be used within our online data-quality monitor, and it will eventually replace all other ROOT-based event visualization tools (within the next decade).
+
+
+\subsubsection{Two-Dimensional Display}
+\subsubsection{Three-Dimensional Display}
+\subsubsection{Web-Based Display}
+
+\subsection{Tutorials}
+
+
+In order to facilitate users we have developed detailed tutorials and documentation for the existing analysis tools.

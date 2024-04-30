@@ -1,46 +1,47 @@
-%
-%%%\documentclass[option]{webofc}
-%%% "twocolumn" for typesetting an article in two columns format (default one column)
-%
 \documentclass{webofc}
 \usepackage[varg]{txfonts}   % Web of Conferences font
-%
-% Put here some packages required or/and some personnal commands
-%
-\input{draftconfig}  % Enable additional annotations for draft mode.
-\newcommand{\ISDRAFT}{YES}      % Tell conditional formating that this is a draft.
-%\input{preamble}      % usepackage calls
+
+
+
+\input{draftconfig}         % Enable additional annotations for draft mode.
+\newcommand{\ISDRAFT}{YES}  % Tell conditional formating that this is a draft.
+
 \graphicspath{{figures/}}
 \input{defs}
-%
+
+
+
 \begin{document}
-%
-\input{titlepage}           % Title page
-\input{abstract}
-%
+
+\input{sections/titlepage}           % Title page
+\input{sections/abstract}
+
 \maketitle
-\input{mu2eexp}
-\input{mu2eorg}
-\input{runplan}
-\input{overview}
-\input{datahandling}
-\input{simulation}
-\input{reconstruction}
-\input{calibration}
-\input{monitoring}
-\input{analysis}
+\input{sections/mu2eexp}
+\input{sections/mu2eorg}
+\input{sections/runplan}
+\input{sections/overview}
+\input{sections/datahandling}
+\input{sections/simulation}
+\input{sections/reconstruction}
+\input{sections/calibration}
+\input{sections/monitoring}
+\input{sections/analysis}
 
-\input{databases}
-\input{codemanagement}
-\input{communication}
+\input{sections/databases}
+\input{sections/codemanagement}
+\input{sections/datamanagement}
+\input{sections/communication}
 
-\input{resources}
+\input{sections/resources}
 
 Where should we describe the harvesting of online data?
 
 \appendix
-\input{timeline}
-\input{reqs} % this is temporary for reference only
+\input{appendices/timeline}
+\input{appendices/daq}
+\input{appendices/reqs} % this is temporary for reference only
+\input{appendices/todo} % temporary
 
 %
 % BibTeX or Biber users please use (the style is already called in the class, ensure that the "woc.bst" style is in your local directory)

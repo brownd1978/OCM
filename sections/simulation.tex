@@ -1,0 +1,27 @@
+\section{Simluations (Dave + Di Falco)}
+\label{sec:simulation}
+Describe the basic problem of Mu2e simulation: rare events, very
+Describe the G4 model
+Describe the detector response simulations (refer to existing docs for details).
+Describe the physics generators
+
+Brief history of existing simulation campaigns.  Show some plots.
+Describe the overall plan going forwards: beam pileup from data, signals modeled from simulated tops.
+
+Describe the test stand and extracted position simulation configurations and strategies.
+
+
+
+\subsection{Mock Data}
+
+
+Mock Data is developed using the output of large-scale production. We combine conversion signals (of a given conversion branching rate) with decay-in-orbit (DIO) tail backgrounds (reaching below the trigger threshold to 75 MeV/c), cosmic backgrounds (from either the CRY or CORSIKA generator), radiative pion and muon capture backgrounds and pile-up. These are then passed through our digitization and reconstruction framework to create ``data-like" samples.
+
+The use of these samples is two-fold: 1) they can be used to develop analysis tools and strategies and 2) they can help us understand our data-production needs.
+
+Mock data is currently built using custom Mu2e scripts. These scripts build .fcl files that utilize the art ``SamplingInput" functionality. This allows the weighted combination of a number of input .art files.
+
+
+\textcolor{red}{placeholder, text will go into more details (Sophie)}
+
+%\textcolor{red}{should ensembles be discussed here? (Sophie)}

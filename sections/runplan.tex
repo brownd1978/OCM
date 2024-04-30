@@ -1,0 +1,50 @@
+\section{Mu2e Commissioning and Data Taking Plan}
+\label{sec:runplan}
+Data taking phase descriptions and goals
+\subsection{Un-integrated test stand running and Offline computing needs}
+\subsection{Cosmic ray commissioning run}
+
+\subsection{Early Beam Configuration}
+Low intensity, unstable conditions.
+
+
+
+\subsection{ Normal Stable Running Configuration}
+
+The overall design of the Mu2e experiment is optimized for the detection of conversion electrons from muons that stop in the stopping target.  Consequently, the normal run configuration will be optimized to produce and record potential conversion electron events, assuming stable and optimized beams.  It must also record signals needed to calibrate and monitor the detector, and potential conversion signal backgrounds.  
+A rough description of that configuration is:
+\begin{itemize}
+  \item Proton beam provided as extracted pulses with good extinction between pulses and reasonable intensity uniformity between pulses (SDF < X)
+  \item Proton beam extracted at nominal intensity, focused as tightly as possible on the production target
+  \item Detector solenoids at nominal field strength
+  \item TS3 collimator set to select a mu- beam
+  \item DAQ system configured for data taking in the window 450 -> 1705 ns relative to the nominal proton bunch arrival time at the production target
+  \item Onspill Trigger configured for optimal efficiency for recording high momentum (p>80 MeV/c) electrons and positrons.  Note that random beam pileup during the $\sim 1 \mu$ second event livegate will record large numbers of protons from $\mu$ nuclear capture in the Al stopping target, and Michel electrons from $\mu$ which stop in the IPA, during the other Onspill triggers.  Consequently, no dedicated trigger is needed to record these particles. 
+  \item Remaining Onspill trigger and data handling bandwidth allocated to dedicated calibration channels
+  \item Offspill trigger configured to record high momentum (nearly straight) cosmic rays useful for background estimation and detector calibration and alignment, in addition to the Onspill triggers.
+\end{itemize}
+This document assumes this configuration is used for the large majority of the data recorded and processed in the computing model.
+
+\subsection{Special Runs}
+Mu2e will use special configurations to enhance non-conversion electron signals that are inaccessible or greatly attenuated during normal stable running configuration, but which are valuable for estimating physics backgrounds to conversion electrons.  Special run configurations will also be necessary when them beam conditions are non-optimal.  Some non-beam calibration run configurations will also be used.  These are described below. Data taken in these configurations will require separate data Offline processing, including separate calibration, monitoring, and reconstruction configuration.
+\begin{itemize}
+\item Unstable minimal feedback configuration.  If the beams are unstable and unsuitable for recording physics-quality data, it may still be valuable to provide feedback on the beam or detector behavior.  These data will require minimal Offline processing to provide monitoring output.
+\item Radiative Muon Capture (RMC) and Radiative Pion Capture (RPC) configurations.  Electrons from RMC and RPC are both a potential physics background and a potential calibration source.  To study these processes Mu2e may run with a dedicated configuration including;
+\begin{itemize}
+    \item Attenuated or mis-steered proton beam to provide lower intensity at the target 
+    \item Detector solenoids operated at lower magnetic field
+    \item DAQ systems configured to take data at earlier times
+    \item OnSpill trigger configured to be sensitive to these electrons    
+\end{itemize}
+The Offline processing of these runs will require dedicated reconstruction configuration.
+\item $\pi \rightarrow e \nu$ configuration.  To record 
+\item $\mu^{+}$ Michel edge configuration
+\end{itemize}
+
+\subsection{Calibration Run Configurations}
+calo source calibration config.
+
+\subsection{Run 1}
+Goals and parameters of run 1.
+\subsection{Run 2}
+Goals and parameters of run 2.

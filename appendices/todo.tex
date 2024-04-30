@@ -1,0 +1,6 @@
+\section{To Do}
+\begin{enumerate}
+\item Need a diagram showing simulation processing flow with simulated pileup frames (previous campaigns) vs recorded pileup frames (plan for 1st data processing)
+\item Intermediate phase: use simulated+digitized pileup frames + simulated signals for IPA DIO, DIO tail, DIF, … (eventually these all come from pileup except DIO tail)
+\item What double counting do we get mixing pileup DIO tail on simulated DIO tail?  At 1BB we have $10^{-4}$ true rate of DIO triggers, most of these are exactly at threshold.  We will need to filter those out from the background frames: ie we want to apply an anti-trigger (highp stoptarg)
+\end{enumerate}

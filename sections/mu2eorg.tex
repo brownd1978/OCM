@@ -1,0 +1,33 @@
+\section{Mu2e computing organization (Bertrand)}
+\label{sec:mu2eorg}
+Mu2e is organized into two major divisions directly under the supervision of the leadership of the experiment: operations and analysis. Computing is distributed across these two groups. Offline computing is the responsibility of Analysis, while Online computing is part of Operations. The trigger software is the only occurrence overlapping both sides; it is run by the Operations group, but its algorithmic content is defined by the Analysis group.  The event processing framework (art), Conditions Data infrastructure, event display, and some data monitoring tools are shared between Online and Offline. The formal transition between Online and Offline data processing occurs once raw data art files have been written to the data logging disk buffers by the DAQ system.
+
+\begin{figure}[htb]
+\begin{center}
+\includegraphics[width=0.9\linewidth]{figures/ACOrgChart.png}
+\caption{The organization of the Analysis division within the Mu2e experiment (the sub-structure of operation coordination is not shown for clarity). }
+\label{fig:orgchart}
+\end{center}
+\end{figure}
+
+The Mu2e organization chart is shown in figure \ref{fig:orgchart}. Under the Analysis branch, Offline computing is divided among several Core Groups responsible for providing tools and expertise for the collaboration, ensuring experiment-wide coherence and minimizing duplication of effort. The current staffing of the Core Groups is preliminary, awaiting the introduction of deputies as collaborators complete their Project responsibilities. The five core groups are: 
+
+\begin{itemize}
+
+\item calibration \& alignment. This group supervises the development of Offline tools and procedures to align and calibrate the various Mu2e detector systems and coordinate the data processing required to derive calibration and alignment values. It is also responsible for estimating the statistical and systematic uncertainties on the alignment and calibration parameters, integrating constraints on the overall momentum scale coming from dedicated measurements, and defining the calibration and alignment parameters used in simulation, and the quantities required to monitor the detector response and validate the agreement with the data.
+
+\item reconstruction. This group develops and characterizes the high-level algorithms used to create physics objects (e.,g. background hit removal, track reconstruction, or calorimeter clustering) used in calibration, analysis, and trigger selections. It also ensures that the reconstruction algorithms used in the trigger meet DAQ requirements, and it defines the reconstruction outputs to be monitored in the validation and CI systems. 
+
+\item simulation. The simulation group develops and validates the Monte Carlo generators used to model signal and background components relevant to Mu2e analyses, based on the best available theoretical models and experimental data. This group is also responsible for maintaining the description of the detector geometry and materials in the simulation, and developing Mu2e detector simulations in different Monte Carlo frameworks (e.g. FLUKA) to establish systematic uncertainties inherent to the Geant4 simulation.
+
+\item infrastructure and production. This group manages the offline computing infrastructure and hardware resources to ensure event data, simulated event data, and conditions data are delivered for analysis in a timely and accessible way. It maintains tools to perform data transfer between the online DAQ storage and offline storage, build and distribute the Mu2e software, access data sets catalogs, access and export Mu2e data offsite, maintain offline conditions databases, and perform offline data quality monitoring and continuous integration testing of the Mu2e Offline codebase. It is also responsible for collaborating with CSAID and other resource providers to ensure access to the computational resources and technical expertise required by Mu2e.
+
+\item analysis tools. This group develops the tools required to perform the various physics analyses within the collaboration, including the definition of an analysis framework for the experiment with reduced data formats (aka ntuples), Offline event display(s), and reference analyses to evaluate the impact of reconstruction code developments on the experimental sensitivity and to validate the analysis framework.
+
+\end{itemize}
+
+Additional responsibilities are shared by all groups, such as documenting tools and procedures, developing data quality metrics, or ensuring that the codes meet Mu2e coding standards and performance requirements. A complete description of the core group charges is available in doc-db 48639.
+
+
+
+
