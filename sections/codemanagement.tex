@@ -1,3 +1,31 @@
-\section{Software Management (Rob)}
+\section{Software Management}
 \label{sec:codemanagement}
-Mu2e uses github to manage our code.  We have multiple repos (list Offline repos).  We use CI testing and commit hooks and clangtidy to monitor quality. Describe code build tools and distribution to users and grid jobs.
+
+The Mu2e code base is managed using public Git repositories, with the official copy stored on GitHub under the Mu2e Organization. %Per the Mu2e Software Policy~\cite{Mu2e:SoftwarePolicy}, all repositories are public except for unpublished analysis work. 
+Code development adheres to industry standards and best practices to ensure high-quality software is continually produced. The development workflow follows a continuous integration (CI) model in which changes are frequently integrated into the source code to ensure that the code base remains in a functional state. All changes are done via pull requests reviewed by experts and validated with a series of quality checks before integration. High-statistics validation tests are also performed to assess the impact of code changes on the reconstruction algorithms and overall physics performance of the experiment. These practices ensure that production quality code can be quickly released at all times. 
+
+
+\subsection{Offline repositories}
+The major repositories relevant to offline computing are:
+\begin{enumerate}
+    \item Offline: the main Mu2e repository, containing the core infrastructure, the core algorithms for simulation and reconstruction, the data product definitions, and utility routines.  It also contains the standard configurations for all \art\ modules and services.
+    \item Production: contains the definitions for complete \art\ jobs for non-trigger purposes, derived from the component definitions found in Offline.  It also includes the configuration information for POMS campaigns and the corresponding scripts.
+    \item mu2e\_trig\_config: contains the definitions for complete \art\ jobs that will run in the trigger, derived  from the component definitions found in Offline. Once the experiment starts taking data, the json file content of the repository will be superseded by tables created by the DAQ run management software.
+    \item TrkAna and Stntuple: contains the code to produce the analysis format data sets
+    \item Mu2eREve: contains the code for the main event display
+    \item Tutorial: source code and documentation for the tutorial examples
+    \item TrackerAlignment, CaloCalibration: calibration and alignment algorithms for the tracker and calorimeter 
+    \item CRVteststand: calibration and alignment algorithms for the CRV test stand
+\end{enumerate}
+
+Additional repositories support TDAQ, elements of the Mu2e Construction Project, data handling, and the systems discussed below. The core repositories comprise Offline, production, and mu2e\_trig\_config, and the remaining ones are built on top of these. Repositories are tagged using semantic versioning. 
+
+\subsection{Code development}
+
+The Mu2e development and run-time environments are managed by a thin bookkeeping layer called Mu2e Software Environment (muse), and the code is built using scons~\cite{scons}. Muse supports adding pre-built binary distributions of the core repositories to the development environment to reduce the time needed to build development code. It also includes a feature to produce a tarball of the current development area usable by grid jobs. Software for distribution is built using projects on the CSAID-supplied Jenkins platform to produce tarballs that are unwound and published on /cvmfs. Production grid jobs always run using software distributions published on /cvmfs, and interactive user jobs that do not require code development also run this way. External products, such as compilers, Geant, root, and the \art\ suite are supplied as pre-built binaries supplied by the CSAID Scisoft team. These products are delivered as spack packages on the /cvmfs file system.
+
+Mu2e uses a Continuous Integration (CI) system in which selected activities on GitHub trigger a GitHub webhook. The webhook sends a message to the CSAID Jenkins platform, which is forwarded to the Mu2e Jenkins projects after authentication. These projects build the requested code and run a suite of 16 tests. Most tests verify that an \art\ job will successfully run a few events; together these have coverage for most of the simulation and reconstruction codes. The tests also include validating the Geant geometry and checking for compliance with coding standards and practices using clangtidy. All changes to the offline repositories are done by submitting a pull request (PR), which also triggers the CI activities just described. The Mu2e computing management organizes a review of each PR and merges the code once all reviewers have given their approval. When needed, the CI can be re-triggered by the author of the PR or repository administrators. We have also implemented commit hooks to check for common formatting errors (line-end whitespace, excessive blank lines, blank lines at EOF, etc.), blocking the commit if they fail. We run clang-tidy on every PR, and have started to require users to address the errors, and examine the warnings, before the PR is merged.
+
+Mu2e runs a validation suite every night, checking for successful builds of all of the major repositories. Similarly to the CI, the validation checks that several jobs running a few events each complete successfully. The validation system also launches 9 grid jobs running a total of 140 grid processes, each of about 30 minutes duration, covering all of the major Mu2e workflows. The validation system collates the outputs and compares them to the most recent reference output using Offline DQM tools described in Section~\ref{sec:monitoring}. The validation system has automated recovery procedures to rerun grid jobs that suffered transient failures of infrastructure. The code driving the nightly validation is maintained in repositories in the Mu2e GitHub organization.
+
+The code is extensively documented on the Mu2e wiki pages, including tutorials, instructions to build and run the software, advice for developers,... Version-dependent documentation is maintained on GitHub. Additional details are given in Section~\ref{sec:documentation}.

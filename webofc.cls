@@ -276,7 +276,7 @@
 \newcommand\@TitleFont{\normalfont\fontsize{14pt}{16pt}\sffamily\bfseries}
 \newcommand\@SubtitleFont{\normalfont\fontsize{12pt}{14pt}\sffamily\bfseries}
 \newcommand\@AuthorFont{\normalfont\normalsize}
-\newcommand\@FirstNameAuthorFont{\itshape}
+\newcommand\@FirstNameAuthorFont{\normalfont\normalsize}
 \newcommand\@LastNameAuthorFont{\bfseries}
 \newcommand\@InstituteFont{\normalfont\small}
 \newcommand\@ThanksFont{\normalfont\fontsize{8pt}{9.6pt}\selectfont}
@@ -441,7 +441,7 @@ e-mail: \protect\@email{#1}%
 %
 % Parse authors, institutes, thanks, and email 
 %
-\def\firstname#1{{\@FirstNameAuthorFont#1\protect}}
+\def\firstname#1{{\@AuthorFont#1\protect}}
 \def\lastname#1{{#1}}
 \def\@parseauthor{%
   \count@ \z@
@@ -752,6 +752,7 @@ e-mail: \protect\@email{#1}%
 \newcommand\@FloatCounterEnd{}
 \newcommand\@FloatCounterSep{. }
 %
+
 \renewcommand\@makecaption[2]{%
   \par\addvspace\abovecaptionskip
   \ifx\@captype\string@table
@@ -767,6 +768,7 @@ e-mail: \protect\@email{#1}%
   \else
     % Figure (and others?): justified
     \begingroup
+      \centering
       \@CaptionFont{%
         \@CaptionTitleFont #1%
         \@FloatCounterEnd\@FloatCounterSep

@@ -1,2 +1,91 @@
-\section{Event Data Handling (Rob)}
-Describe the event data handling model from when it appears Offline (from DAQ) to analysis.  This should be largely stolen from the RDM document 39531.  Describe data handling tools. Describe raw data upload, file family plan, pass11 raw data intake (create conditions and start jobs), job processing tools and robustness controls, output file flow, using persistent, and publishing data for use in calibration and other collaboration needs. Point to other sections for DQM, calibration.  Describe Pass2 and production of analysis datasets.
+\section{Data Handling}
+\label{sec:datahandling}
+
+The data logging system brings data from the DAQ disks to the archival storage facility and distributes it to the various computing elements. The components include a file transfer agent to transfer data from the DAQ system, a replica manager orchestrating transfers between storage elements, a file metadata catalog, and interfaces to deliver the appropriate files to workflow management systems and interactive users. The existing Mu2e data catalog, Sequential Access via Metadata (SAM), was designed for the previous generation of collider experiment at FNAL, then adopted by many intensity frontier experiments. This infrastructure is currently being replaced by a new system based on Rucio, MetaCat, Data Dispatcher, and DeclaD.
+
+\subsection{System components}
+MetaCat~\cite{Mandrichenko:2021spd} is a general-purpose metadata catalog storing permanent file description information, with location and delivery handled by Rucio. MetaCat provides four major functions: store metadata associated with a file; provide a mechanism to retrieve these metadata; efficiently query the metadata database to find entries matching a list of predicates; and provide a mechanism to integrate metadata stored into external sources to query the database. The last functionality allows, for example, to seamlessly find a set of files matching criteria stored in a condition or run database. The metadata representation is flexible enough to accommodate a wide range of types and complex structures, and the catalog can scale to several hundred million entries.
+
+Rucio~\cite{Barisits:2019fyl} is a replica manager system designed to centrally manage large volumes of data backed by many heterogeneous storage backends. This system was originally developed by the ATLAS experiment and has now been deployed to several other HEP and astronomy experiments. In a distributed system where data are physically stored over a multitude of storage servers, potentially each relying on different storage technologies (SSD/Disk/Tape/Object storage), Rucio provides an interface enabling users to interact with the storage backends in a unified way. The data can be accessed interactively or in batch jobs, and the closest file replica to the running job is delivered via streaming. Rucio is a rule-based system, allowing users to define high-level rules such as "keep 2 copies on 2 different sites". If one copy is lost, the system will automatically copy the data from a different storage site to maintain the rule. 
+
+Data Dispatcher interacts with user and production systems to provide file location information from Rucio to clients. More specifically, it delivers file handles to consumers, keeps track of consumer status and files consumed, provides monitoring and control, and coordinates data processing among data consumer processes.
+
+DeclaD, the Declaration Daemon, is a file transfer agent used to drain files from a set of directories and store the corresponding information in Rucio and MetaCat. DeclaD is used to transfer files from the Mu2e DAQ disks to dCache. The automated follow-on processing (\passone) is discussed in the next section.
+
+\subsection{Storage}
+Data processing will primarily utilize two types of storage: dCache and tape. dCache is a distributed, multi-petabyte scalable disk storage system with a single rooted filesystem providing location-independent file access. The dCache storage is readable and writable from grid machines via xrootd and transfer mechanisms such as Intensity Frontier Data Handling (ifdh). It is expected to be the main storage element for the output of distributed production jobs. The dCache scratch area is used mainly for output produced from grid jobs and files are automatically removed based on a policy with a typical lifetime of one month. The dCache persistent volume is an area for persistent storage of user files (e.g. files must be removed by their owner). The dCache tape-backed volume is a disk cache sitting in front of the tape system to prestage files written to tape. The tape storage infrastructure provides long-term storage. The current tape storage software, Enstore, provides access to data over the wide area network through the dCache disk caching system. Fermilab is actively pursuing a transition to using the CERN Tape Archive (CTA) software.
+
+The files produced by the DAQ system will be written to persistent dCache, and most of them will be immediately copied to tape-backed dCache. The copy in persistent dCache is needed to ensure that the file is on disk when \passone\ reconstruction starts (see Section~\ref{sec:dataProc}). This copy will be deleted once processing is complete. Several data streams contain pedestal data from the CRV or pre-scaled raw and intermediate data from the ExtMon and STM. Depending on the DOE data retention policy and the need of the sub-systems, these data might only need to reside in persistent dCache for a short period of time, without being written on tape. The final strategy will be elaborated closer to data taking. Other streams might also produce small data files (e.g. off-spill triggered events or the Error/Debug Stream). These files will be held in persistent dCache for some time, perhaps a few days, and concatenated before being written to tape to make efficient use of this media. We plan to concatenate the Error/Debug stream into a single art file and to make compressed tar files of the DQM output and log files. Once transferred, the persistent dCache copy will be given an expiry date. Finally, a large dCache tape-backed volume may be requested to speed up pre-staging if a large amount of data needs to be read from the tape. This might be the case, for example, if a significant fraction of the data are reprocessed at a later time.
+
+\subsection{Job production manager}
+The production system is used to streamline data processing. It automatically detects new entries in the file catalog and launches the corresponding processing tasks. A prototype of the data production system has been developed with previous generation technologies: SAM (file catalog), FTS (file transfer agent), and POMS (Production Operations Management Service) supporting multi-stage workflows. It has been in operation for about a year to record and process data from the cosmic ray veto test stands. POMS has also been used extensively in simulation campaigns. The existing system is ready to support upcoming sub-detector Vertical Slice Tests. 
+
+The transition to the new data handling tools is in progress, and  preparations for Rucio and MetaCat are nearly complete. Several possibilities are currently considered to replace POMS by a new job management system. Requirements on this system have been defined, emphasizing robustness and accessibility to ensure that data production can be easily managed by non-experts. A decision on the choice of technology is expected in the near future, with the goal of producing a first prototype well in advance of the cosmic ray data taking.    
+
+
+\subsection{File family plan}
+Mu2e faces two types of file management challenges: efficiently pre-staging large data sets from tape, and managing data sets containing many small files. The first challenge will be faced only starting at the beginning of data taking with beam. To mitigate this issue, large data sets will be segregated into their own file families, and pre-staging will be tested using the new data handling tools and tape system (RUCIO, dCache, and CTA). This system should offer much better performance than the current architecture based on SAM, dCache, and ENSTORE. Tests could be conducted soon after CTA is available (scheduled for early CY25), giving enough time to work with the CSAID Storage Group to tune the process. The fallback position is to use migration mode, similar to the g-2 experiment.
+
+The handling of small files presents another challenge as \emph{small file aggregation} (SFA) packs cannot be written with CTA anymore. Potential strategies to concatenate small files will be tested once CTA is available. Mu2e is also following the recent work performed by the CSAID storage team regarding the impact of file size on CTA performance and lessons learned will be included in the overall management strategy.
+
+Table~\ref{tab:filefamilies} gives a preliminary list of tape file families Mu2e will use. Some file families will be primarily archival and only rarely accessed (e.g. log files or DQM data). As such, they do not need to be finely divided. Two copies of the files in the Raw Data file families will be kept on tape at physically separate locations, and a single copy will be stored for all other file families.
+
+As Mu2e gains experience and codes improve, data will be reprocessed and re-simulated, creating multiple generations of data. New file families will be created for each new generation of files for large data-volume outputs produced by reconstruction and simulation. A single family will be used for smaller data sets for the duration of the experiment.
+Beam data will be split into separate families for Run1 and Run.
+
+Additional file families for \passone\ will be defined for the CRV, STM, and ExtMon sub-systems once their data processing workflows are finalized. The "Normalization data streams" contain files from the Intensity Stream, the STM pulse summary data, and the summary data from the ExtMon (both Pixel and AFF). These files are written to a single file family since they will be analyzed together, and files close in time should be written close together on tape.
+
+For the simulation campaigns, all events will be recorded as analysis format data and a subset of events will be recorded with the full simulation and reconstruction outputs. Files from user simulation should be small enough to fit on a single tape volume, as user simulation campaign producing significantly higher volumes would be promoted to a collaboration simulation campaign. The size of Analysis Format data is expected to be small enough to fit a generation on less than a single tape volume. We expect this plan to evolve as the workflows are developed in more detail.
+
+
+%Mu2e dataset names currently follow a fixed, five-field pattern: {\it data\_tier.owner.description.configuration.file\_format}. The {\it data\_tier} describes the file product content, at a conceptual level. The {\it owner} is mu2e for officially produced datasets, and the username for individual production. The {\it description} is a mnemonic string describing the content and intended purpose, while the {\it configuration} captures details of the configuration used to produce these files. Finally, the {\it file\_format} is the commonly-recognized file type. All abbreviations and mnemonic strings are described in the computing wiki pages. A similar scheme is envisioned for data.
+
+
+\begin{table}[htb]
+\centering
+\begin{tabular}{|l|l|}\hline
+Raw Data   & Trk+Cal+CRV triggered events on-spill \\
+(2 copies) & Trk+Cal+CRV triggered events off-spill \\
+           & Normalization stream \\
+           & Calorimeter pulser events \\
+           & CRV zero bias triggered data \\
+           & ExtMon prescaled R\&I data (Pixels \& AFF) \\
+           & STM waveforms for selected pulses \\
+           & STM prescaled R\&I data \\ 
+           & Other raw data \\ \hline
+Pass1\_N    & Full reconstructed output on-spill\\
+           & Full reconstructed output off-spill\\
+           & Physics stream on-spill \\
+           & Random on-spill trigger stream \\
+           & Tracker calibration on- and off-spill\\
+           & Calorimeter calibration on- and off-spill \\  \hline
+Pass2\_N      & Full reconstructed output on-spill\\
+           & Full reconstructed output off-spill\\
+           & Physics stream on-spill \\ \hline
+Reco\_N       & Other reconstructed data \\ \hline
+Analysis\_N  & Reconstruction format skims (per channel)\\ 
+           & Analysis format skims \\
+           & Display format skims \\ \hline
+Simulation\_N & Physics and background primaries\\
+           & Muon, Electron, and Neutral Beam \\
+           & Stopped Muons \\
+           & Digitized simulated events \\
+           & Reconstructed simulated events\\
+           & Analysis format simulated events \\ \hline
+User Files & Data skims, reconstruction format \\
+           & Data skims, analysis format  \\
+           & Simulation skims, reconstruction format \\
+           & Simulation skims, analysis format \\ \hline
+Other      & Archived Online and Nearline DQM data\\
+           & Archived Online and Nearline logs \\
+           & Archived Offline DQM data \\
+           & Archived Offline logs \\ 
+           & Archived simulation production logs \\ \hline
+\end{tabular}
+\caption{The Mu2e plan for tape file families. A unique file family for each data processing cycle will be used for streams labeled "\_N".}
+\label{tab:filefamilies}
+\end{table}
+
+
+
+

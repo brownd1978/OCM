@@ -1,0 +1,320 @@
+\section{Event Data Handling (Rob)}
+\label{sec:datahandling}
+
+\red{
+Describe the event data handling model from when it appears Offline (from DAQ) to analysis.  This should be largely stolen from the RDM document 39531.  Describe data handling tools. Describe raw data upload, file family plan, \passone\ raw data intake (create conditions and start jobs), job processing tools and robustness controls, output file flow, using persistent, and publishing data for use in calibration and other collaboration needs. Point to other sections for DQM, calibration.  Describe Pass2 and production of analysis datasets.}
+
+%\blue{Somewhere earlier make sure that we have defined, define on-spill, off-spill, MI cycle, spill,, PBI} - Done (Bertrand)
+
+\subsection{Boundary Between Online and Offline}
+\label{ssec:datahandling:boudary}
+
+The boundary between online and offline responsibilities is at the large disk buffer on the DAQ computers in the Mu2e building.
+The buffer is sized to hold about 48 hours of data so that the experiment can continue operations in the event that Fermilab computer center becomes temporarily unavailable.
+It is the responsibility of the DAQ group to write files to this buffer. It is the responsibility of the offline group to move these files to long term storage in the Fermialb computer center and to process them.
+The offline group is also responsible for deleting files from the disk buffer once they are safely in the computer center.
+
+\subsection{Data Logging}
+\label{ssec:datahandling:datalogging}
+
+Three Fermilab supported services will be used as part of data logging, RUCIO, Metacat and DeclaD.  
+RUCIO is a file replica manager;
+it catalogs file locations and can move files among locations according to specified rules. Metacat is a file metadata database.
+Together these provide a full picture about each file.
+DeclaD, the Declaration Daemon, is a file transfer agent that can drain files from a set of specified directories on the Mu2e DAQ disks, upload them to dCache,
+and upload information into both RUCIO and Metacat.
+
+Mu2e will use DeclaD to move files from the DAQ disk buffer to dCache.
+The automated follow-on processing is called \passone\ and is discussed in Section~\ref{ssec:pass1}.
+
+A prototype of this system already exists but it uses previous generation techologies: the file catalog is SAM, the file transfer agent is FTS and the submission of follow-on jobs is managed by POMS.  This system has been used for about a year for data from the cosmic ray veto test stands in Wideband Lab.  The full system has been exercised, moving data to long term storage, registering it in SAM and automatically running the first geneation of data processing jobs.  The system was also used to collect and process early data from the tracker Vertical Slice Test (VST);  it is ready to ready to restart when the tracker VST needs it again.
+The system is also ready for use by the calorimeter VST that is expected to start later this year.
+\red{Fixme: can I replace this with a reference to a section by Ray?}
+
+A system based on the new tools is under development. Preparation of RUCIO and Metacat is nearly complete.  Work has been paused because CSAID has stopped the development of POMS backed by RUCIO and Metacat.  Mu2e is evaluating our options and expects to restart work by Oct 1, 2024.
+
+\subsection{Runs and Subruns}
+\label{ssec:datahandling:runsSubruns}
+
+The Mu2e offline code is built on top of the \art event processing framework, which is supported by CSAID.  
+In \art, events are labelled by a 3 part identifier, with parts named run, subrun and event.  The Mu2e DAQ system, described in Appendix~\ref{sec:daq}, has been designed so that transitions between subruns have no deadtime but that transitions between runs incur a deadtime of approximately 5 minutes.  This is used to restart processes and reload firmware as prevention against single event upset.   Reconfiguration of the DAQ may only occur on a run boundary.
+
+Mu2e has decided that a subrun will have a duration that such that
+\begin{enumerate}
+    \item conditions are constant throughout the subrun
+    \item the output data files are small enough to be processed within a single grid job
+    \item it contains an integer number of MI cycles
+    \item each new subrun will start near the end of the ~1~s of off-spill running within an MI cycle. 
+\end{enumerate}
+For purposes of building this model, and based on preliminary discussions with the Mu2e detector experts, we have chosen a subrun duration of 50 MI cycles, which corresponds to 70 seconds.\red{
+this is an example.  Another option might be 85 MI cycles and 119~s.
+}
+
+The duration of a run will be chosen based on operational experience but is likely to be in the range of 6 to 12 hours.  For some types of interruptions to data taking, a new run will be started when data taking resumes; for others the run will continue.
+
+One consequences of the above is that a subrun will include both on-spill and off-spill data. A second consequence is that intervals of validity in the conditions system can be expressed as a range of subruns.
+
+\subsection{File Streams}
+\label{ssec:datahandling:filestreams}
+
+For triggered events, information from the tracker, calorimeter and CRV will be present in the data files written to disk.  Data from the MTSM flows through the DAQ to a separate set of files in the disk buffer.  And data from the MSTM flows through the DAQ to a third set of files in the disk buffer.    The reason behind this split have to do with differences in latencies among the systems.  Data in all files will be identified using \art EventIDs or with identifiers than can be converted to an \art EventID.
+
+The  Mu2e DAQ system will produce about 15 types of data files.  The set of all data files of one type is called a file stream.  These are summarized in Table~\ref{tab:filestreams } and are discussed below.  One of the principles used to define the file streams is that no downstream workflow will want to read events from two file streams.
+
+\begin{table}[htb]
+    \centering
+    \begin{tabular}{l|l|l|l}
+       & Data Type                         &  On-Spill/ & Data Volume \\ 
+       &                                   &  Off-Spill  & (PB/year) \\ \hline
+      1 &  Trk+Cal+CRV triggered events       & On & 3.25 \\
+      2 &  Intensity Stream                   & On & 0.15 \\
+      3 & ExtMon Pixel  summary data           & On & 0.25 \\
+      4 & ExMon Pixel Telescope prescaled R\&I data & On & 0.01 \\
+      5 & ExtMon AFF summary data             & On & 0.13 \\ \hline
+      6 & Trk+Cal+CRV triggered events        & Off & 0.01 \\
+      7 & CRV zero bias triggers              & Off  & 0.50 \\
+      8 & Calorimeter Pulser Events           & Off  & Small? \\ \hline
+      9 & MSTM pulse summary data             & Both & 0.12 \\ 
+      10 & MSTM waveforms for pulses near important lines & Both & 0.16 \\
+      11 & MSTM prescaled R\&I data                       & Both & 0.12 \\
+      12 & Error/Debug Stream                             & Both & Small? \\ \hline
+      13 & Online DQM output                              & Both & ? \\
+      14 & Log files                                      & Both & ? \\ \hline
+    \end{tabular}
+    \caption{Files streams produced by the Mu2e DAQ.  The abbreviation "R\&I data" means raw and intermediate data. See the text for details. The Data volume column assumes 2 Batch running and a trigger rejection factor of 400:1. }
+    \label{tab:filestreams }
+\end{table}
+
+\red{Dave has suggested that we limit our responsibility to files of raw data and
+transfer responsibility for the Offline DQM output and all log files to TDAQ.  
+The backstory is that when Andrew was in charge of NOvA TDAQ he configured the trigger executables to write large volumes of info/error messages to the log files.  These were datamined for issues that occured in events that did not pass the trigger.  He says that this was critical to their success and that the size of the log files equaled the size of the raw data files.  Andrew has said that he intends to do the same for Mu2e.  IMO Mu2e should do a better job of producing diagnostics for events that failed the trigger so that this is unnecessary.  That is partly in our scope since we  write the algorithms but partly out of our scope since many run time configuration decisions are within the scope of TDAQ.
+}
+
+The largest volume data files will be the triggered on-spill events, which contains a small number of events that are part of the main physics stream plus many events that will be used for calibration and monitoring of the detector.
+\textcolor{red}{Sophie: do you need an estimate for the Calo source events?}
+There are ongoing discussions whether to write all events to a single file or whether to write several files by selecting on the basis of tigger lines.  The answer will depend on a global optimization of the downstream workflows.
+
+The Intensity stream will contain a small amount of information for every on-spill event.  The information that it contains will be proxies to follow fluctuations in the Proton Pulse Intensity (PPI).  This will be discussed in section \red{fixme}.
+
+The Extinction Monitor views a small piece of the phase space of the scattered proton beam.  It has two active systems, a pixel telescope that measures the trajectories of these particles and a thick scintillator, read out by a PMT, called the Accelerator Fast Feedback (AFF). 
+
+The summary data produced by the pixel telescope will be the number of on-pulse reconstructed tracks, reported about every 10th event, and the number of reconstructed between-pulse tracks, reported every event.  If the extinction systems are working the correctly, almost all of the between-pulse measurements will be zero, which allows for a compact representation of the data.
+
+The AFF measures the light output produced in a thick scintillator by the on-pulse particles that pass through the system.  The measured pulse height is sent on a dedicated line to the accelerator control room.  This signal is sent every event and will be used by the accelerator staff to monitor the targeting of the proton beam on the production target. In the original design of Mu2e this information would not be part of the Mu2e data stream.  We have requested that the ExtMon team add this information to the ExtMon summary data because it is the most promising candidate for measuring the fluctuations in the proton pulse intensity.
+
+The packaging of summary information has not yet been decided but the leading candidate is to form an object that collects the information for each spill and to collect these objects into a collection that is added as a data product in the \art SubRun object.
+
+The ExtMon team plans to record heavily prescaled raw data and less heavily prescaled intermediate data. The plan is to write summary data for the pixels and AFF to separate files and prescaled pixel R\&I data to a third file.
+
+During off-spill data taking, the TDAQ will run the same triggers as on-spill plus triggers to measure through-going cosmic rays that pass through the tracker, the calorimeter or both.  The reason for running the on-spill triggers is to produce a sample of events in which a cosmic ray or one of its descendant can produce a triggerable track.  These will be used for two purposes. First, it allows a direct measurement of the number of signal like tracks produced by cosmic rays and a direct measurement of the efficiency of the CRV for vetoing these tracks.  Second, is provides tracks for use in calibration and alignment.  The rate of these triggers is a few tens of Hz
+
+During off-spill data taking, the TDAQ plans to record samples of data to study pedestals. On each event that is triggered, they will send non-zero-supressed data from a few sectors of the CRV.  Over the course of many events they will cover the full CRV.  It is expected that the TDAQ will need to generate random triggers to ensure that enough events are collected for pedestal studies.
+ 
+During off-spill periods there will be some events in which the calibration signals are injected into the calorimeter and measured.  These events will be identified by a bit in the event heartbeat packet and will be written to their own file.
+
+Mu2e will event 3 files of off-spill events: one file will contain all triggered events, exclusive of the calorimeter calibration events and events that passed only the random trigger; a second file will contain the calorimeter calibration events; the final file will contain all triggered events for use by the CRV for pedestal studies.  The first two files will be small and the third will be large.
+
+The MSTM will process all pulses in hardware that is close to their detector.  They will record
+pulse summary data for every measured pulse; for pulses with an energy close to that of the X-ray and gamma ray lines of interested they will record full waveform data; they also plan to record heavily prescaled raw data and less heavily prescaled intermediate processed data. The plan is to write three files: one with pulse summary data, a second with the waveform data for pulses near the lines of interest and the third with the prescaled raw and intermediate data.
+
+One of the gamma rays lines monitored by the MSTM has a half life of several minutes.  Therefore the MSTM will continue to operate throughout all of the off-spill periods in the supercycle.  This is the meaning of the entry "Both" in the On/Off-spill column of Table~\ref{tab:filestreams }.
+When the experiment enters an extended period with no beam, the TDAQ will continue to run in off-spill mode for at least 10 minutes to allow the MSTM to continue to integrate this gamma ray line.  This information is 
+
+The trigger processes that run within TDAQ will flag events that exhibit unusual behavior.  These will be written to a separate file stream called the Error/Debug stream.  A plan, not yet implemented, is, for selected algorithms, to run the algorithm in a separate thread with a timeout enabled.  If the timeout triggers before the algorithm completes, the event will be written to the Debug/Error stream.
+
+The TDAQ will start some number of online Data Quality Monitoring (DQM) processes that sample the event stream coming out the DataLogger.  These processes will run algorithms to produce DQM information that is entered into the EPICS database and monitored by the Detector Control System (DCS).  These processes will also produce files containing histograms and ntuples that can be inspected when the DCS flags any Process Variables as out of tolerance.  The offline group is responsible for copying these files to long term storage.  The plan is that the files will persist on the online disk for some days before they are retired, that they will stay on dCache for a longer period of time and that they will be copied to tape for long term storage.
+
+Finally, all of the above will produce log files that will be copied to long term storage.  As with the DQM files will also be retained on the online disks and one dCache for a period of time to be determined.
+
+\subsubsection{Atomic Subruns}
+\label{ssec:atomicSubruns}
+
+Mu2e requires that, within each file stream, all events from one SubRun be contained within a single file.  This is required so that reading sparse skims does not result in memory bloat due to retention of all SubRun fragements in memory for the full duration of the job. This savings is realized by use of the {\tt compactEventRanges: true} parameter of the \art RootInput module.
+
+Mu2e allows that a single file may contain events from mulitple SubRuns.   Mu2e also allows that two files streams may have different groupings of SubRuns into files. For example, the on-spill triggered events may contain only a single SubRun while the Calorimeter Pulse Events may contain all SunRuns for several hours. The controlling factors are the needs of downstream processing.
+
+\subsection{Curating Information from the Online Databases}
+\label{ssec:onlineDatabases}
+Section~\ref{sec:databases} describes the online and offline databases.  It is the responsibility of offline computing to collect curated information from the online databases and to add them to the appropriate databases in the online world.  For example, temperatures and air pressures recorded in the EPICS database need to be inserted into the offline conditions database so that algorithms running offline have access to them.  A second example is that conditions information can be updated online; if that conditions information is used in the trigger it needs to be available offline.
+A third example is that run quality information from the online world needs to be integrated into the overall run quality information that is maintained in the offline world.  
+
+This information needs to be available in the offline databases promptly so that it is available to be used by \passone.
+
+\subsubsection{Using Persistent dCache to Optimize Tape Usage}
+\label{ssec:optimizeTapeUsage}
+
+The data logging workflow was discussed in Section~\ref{ssec:datahandling:datalogging}.  Mu2e plans to write all files to persistent dCache.  For many files, a copy will be written immediately to tape-backed dCache at the same time.  The reason to keep a second copy in dCache is to ensure that the file will still be on disk when the \passone\ jobs start.  The copy in persistent dCache will be deleted after \passone\ has run.
+
+There are several reasons why some files will not be written immediately to tape.  Some file streams, for example, will write very small files.  In order to make efficient use of tape these files need to be concatenated. An example is the off-spill triggered events.  This will be discussed in more detail in Section~\ref{ssec:pass1:offspilltriggered}. 
+
+File streams 4, 7 and 11 from Table~\ref{tab:filestreams } contain either pedestal data from the CRV or pre-scaled raw and intermediate data from the ExtMon and MSTM.  The Mu2e offline team is working with the subsystems to understand if this data needs to be written to tape or if it can reside only in persistent dCache and expire from dCache after a short time, perhaps a week or two.  We also need to learn DOE data retention policy regarding this sort of data.  If this plan converges it will result in the savings of tape media of bandwidth to tape.  It seems likely that, during commissioning with beam, we will write data to tape and enable the tape-free plan after it has been proven to be sufficiently robust.
+
+There are other file streams that will write very small files. These include the Error/Debug Stream, the online DQM output and the log files.  Moreover, once on tape, these file streams will only rarely be read.  The Mu2e Offline team plans to hold these in persistent for some time, perhaps a few days, and package them to write larger files to tape.  This will more efficiently use the tape media.  We plan to concatenate the Error/Debug stream into a single art file and to make compressed tar files of the DQM output and log files.   Once the files are on tape, the copy in persisent dCache will be given an expiry date.
+
+\subsection{\passone}
+\label{ssec:pass1}
+
+The name \passone\ is a placeholder for the workflow that will run on each file soon after it is available offline.
+Different file streams will have different workflows.
+%Among other outputs, \passone\ will produce DQM information which more complete coverage and 
+%better precision than will be available from the online DQM.  Most of the time this information %should be available within 2 to 3 hours but it will have tails to longer times, particularly when
+
+\subsubsection{Data Production Workflow Infrastructure}
+\label{ssec:pass1:infrastructure}
+
+Mu2e has developed a prototype of the workflow management system that will manage the workflows of \passone\ and most other offline production data processing.
+This prototype uses the Production Operations Management Service (POMS) with its longstanding SAM back end and it is being used to process data from CRV test stands in Wideband.
+The basic operation is that it recognizes when new files from Wideband have been entered into the file catalog and it automatically submits grid jobs to process those files.
+The grid job payload is an \art job defined by the CRV team.  The system supports multi-stage workflows.
+The prototype is ready to support the restart of the tracker VST and the start of the calorimeter VST. 
+This prototype will be adequate to meet the needs of Mu2e at least until the start of the Cosmic Ray Run in May 2025. \red{It's probably good enough to get us to the detector KPP but saying that might send the wrong message.}
+
+Mu2e had planned a new system that was based around an evolution of POMS that uses RUCIO, Metacat and DataDispatcher instead of SAM.   A few weeks ago, the SCSSD Divsion of CSAID announced that they would withdraw support for POMS and that it no longer planned to complete the evolution to use the hew data handling tools.  The Mu2e offline team, in consultation with the DSSL Division of CSAID, is evaluating our options and plans to restart work on the new infrastructure no later than October 1, 2024.
+
+\subsubsection{\passone\ for On-Spill Triggered Events}
+\label{ssec:pass1:onspilltriggered}
+
+% In the trigger, the minimal set of algorithms are run and they are configured for high speed in order to make a trigger decision within the time budget.
+% The online group plans an online DQM process that will see only a subset of the event stream.  
+% The details of which algorithms will be run, with which configuration is under development.
+% One of the goals of \passone\ on these events is to provide more complete, higher quality DQM information in a timely fashion. 
+
+%Before \passone\ can run, some information from the online databases will need to be uploaded to the
+%offline database.  This is discussed in Section~\ref{ssec:onlineDatabases}.
+%The \passone\ workflow will have a step where it waits for a signal that the offline databases are up to date.
+
+%Depending on the duration of SubRun, a \passone\ job may process one file or it may process several files.  The system will %be designed to accommodate both options.
+
+The \passone\ workflow will process 100\% of the triggered events through the full set of offline reconstruction algorithms. 
+It will run using the same conditions information that was used in the trigger processes.
+\passone\ will produce the following outputs:
+\begin{enumerate}
+    \item The main physics output file.  This will contain events with signal-like tracks, for both
+           $\mu^-\to e^-$ and $\mu^-\to e^+$, plus events of interest for background studies.
+           These files will contain a complete copy of the raw data for these events.
+    \item Several files each with events selected as inputs to the calibration algorithms.
+    \item Offline DQM information. See Section~\ref{sec:monitoring}.  This DQM information will have higher statistics and more complete coverage than does the currently planned online DQM system.
+    \item \red{We have not discussed this.  In the early days we probably want a file with all data products for all events.  As we get experience this file might shrink or go away.}
+\end{enumerate}
+Where necessary, the \passone\ workflow will include stages to concatenate small output files into a single large file.
+
+At run-start time, the \passone\ workflow will wait until curated information from the online database is available.  See Section~\ref{ssec:onlineDatabases}.
+This process will be automated and, under normal conditions, should take no more than several minutes.  As the data logging system, Section~\ref{ssec:datahandling:datalogging},
+delivers files the \passone\ workflow will monitor the file catalog and launch grid jobs to process newly arrived files.  The size of the files, and therefore the processing time per file, 
+will depend on tradeoffs that are not yet known.  
+Therefore the \passone\ workflow system will support processing either a single file in one grid job or many files on one grid job.  
+There are no plans to process data in chunks smaller than one file.  
+Under normal conditions jobs should be launched no more than 10 minutes after the files are cataloged.
+Under normal conditions, grid jobs will complete in 2 to 3 hours after submission.  
+The bottom line is that \passone\ will be complete on the time scale of 3 hours following the close of the file online.
+This time distribution will have tails to longer times and, based on general experience with grid jobs, Mu2e estimates that around 95\% of the time \passone\ will be complete in less than 6 hours from the close of the file online.
+
+As discussed in Section~\ref{sec:monitoring}, the offline DQM will be summarized in timelines of metrics and that out of tolerance metrics will generate an alarm.  The histograms and TTrees from which these metrics are derived will be retained on disk for a time to be determined and also written to tape. This work is included in \passone\ .
+ 
+\subsubsection{\passone\ for Off-Spill Triggered Events}
+\label{ssec:pass1:offspilltriggered}
+
+In broad strokes the processing of these will follow the same workflow as the on-spill triggered events.  
+
+The one important difference is that each file of off-spill trigger events will be small.  So the files will be concatenated before they are written to tape. There is a competing demand to produce prompt offline DQM information. The Mu2e data production group is considering options to balance these demands.
+
+\red{Checking one thing: when we do tracker alignment I see us running one art job on the on-spill events and one job on the off-spill events.  Then Miliepede  will read both outputs into one job.
+Is this the right picture?  The underlying question is checking if we will ever need to merge on-spill and off-spill events.
+}
+
+\subsubsection{\passone\ for the Error/Debug Stream}
+\label{ssec:pass1:errordebug}
+
+Files in the Error/Debug stream will be copied to tape, concatenated if necessary.
+They will also be retained on disk for a time to be determined so that they are available for experts to investigate the issue that caused them to be flag.
+There is no \passone\ data processing planned for these events.
+
+\subsubsection{\passone\ for Normalization File Streams}
+\label{ssec:pass1:normalization}
+
+The normalization file streams are the Intensity Stream and the summary data streams from the ExtMon Pixel detector, the ExtMon AFF and the MSTM.
+The purpose of collecting this data is to understand the variation in PBI over the course of each spill.
+Mu2e expects peaks of up to 5 times nominal PBI during most spills and peaks to 8 times nominal during particularly unstable spiils.
+During fluctuations to high intensity, the probability of producing a conversion electron increases but the efficiency for reconstructing it is lower.
+To properly normalize our result we must weight candidates events by our best understanding of their reconstruction efficiency.
+How to process this data to obtain a time profile of the PBI throughout each spill is an R\&D effort within the Mu2e Collaboration. 
+
+All of these streams have per-event information but not all information will be available for every event.
+In addition packaging small data products as objects in an {\tt art::Event} is inefficient in both disk/tape space and access time.
+Current thinking is that organizing the data around spills makes the most sense.
+Spill oriented objects could live in a database or a {\tt C++} collection of such objects could live in each \art\ SubRun object.  
+Final decisions on structuring the data will be driven by the R\&D effort as it matures.
+
+For these files, the job of \passone\ will be to package the information in a way that is convenient for downstream processing.
+If necessary, \passone\ will concatenate input files to make more efficient use of tape.
+
+\subsubsection{\passone\ for Low Level Calibration Streams}
+\label{ssec:pass1:lowlevelcal}
+
+The first class of low level calibration streams include:
+\begin{enumerate}
+    \item the prescaled raw and intermediate data from the ExtMon pixel detector and the MSTM
+    \item the Calorimeter pulser events
+\end{enumerate}
+The detector teams will define \passone\ workflows that will be run on these events. The output will be DQM for conditions information and, when necessary, updated conditions information that will uploaded to the Conditions Database.   These data will stay in dCache for a time to be determined and are candidates for never being written to tape.
+
+The second class of such data is the MSTM waveform data for pulses with energies near the important lines.  The MSTM team plans to periodically refit these pulses with updated conditions information.   This will allow a higher quality estimation of the stopped muon yield.  This data will be  written to tape, with concatenation when necessary
+
+\subsection{Calibration}
+\label{ssec:calibration}
+
+Each subsystem will get two sorts of information from \passone\, monitoring information to assess the state of the current conditions information and files of events that can be used to update conditions information.
+As the calibration algorithms mature, much of this processing can be moved into \passone.
+The updated calibrations will be added to the Conditions Database.
+
+Often it will be sufficient to read the output of \passone\ once in order to compute updated conditions information.
+Other times, particularly during commissioning and early data taking, it may be necessary to iterate, to rerun a subset of \passone\ using the just-determined conditions information, recompute updated conditions information and test for convergence.
+When it is necessary to update calibrations, the subsystem teams will be able to run the repeated \passone jobs themselves, using the data production workflow system.
+
+Mu2e will have a calibration manager whose job it is to work with all of the subsystems and to certify when the calibrations for a time interval of data are complete.
+
+\subsection{\passtwo}
+\label{ssec:pass2}
+
+Once calibrations for a time interval of data are certified, the main physics stream data for on-spill triggered events will be reprocessed using the updated conditions information. This operation is called \passtwo.
+During commissioning and early data it will start from the raw data and redo the full reconstruction.
+The output of \passtwo will be the main physics output file plus DQM information.
+
+As we gain experience we expect to discover that it is safe to refit existing tracks
+and redetermine the parameters of existing calorimeter clusters and CRV concidence clusters.
+When that occurs we can filter the raw data in the output \passone\ to only include
+the necessary information.
+
+Based on experience with previous experiments,  Mu2e expects the following 3 week cycle early in the experiment.
+In each week, take data for week N, run calibration jobs for data from week N-1 and run Pass2 for week N-2.
+As the collaboration gains experience it may be possible to compress this time scale.
+
+During a year long run, we expect continuous improvements in calibrations and in reconstruciton algorithms.
+This will be especially true in the early years.
+When integrated improvements warrant it, we will rerun \passtwo\ on the years data to date.
+
+\subsection{Production of Analysis Format Datasets}
+\label{ssec:ntupling}
+
+Section~\ref{sec:analysis} discusses the two current formats for analysis datasets and plans for analysis.
+There may be serveral analysis format datasets, each targetted at a particular analysis or study.
+Analysis format datasets will be produced by reading the output of \passtwo.
+Some additional reconstruction algorithms may be run at this time.  The analysis format datasets will be produced for every iteration of \passtwo.  
+As analysis algorithms evolve we expect to rerun production of analysis format datasets to add new information.
+
+Section~\ref{sec:analysis} discusses that both the output of \passtwo and the analysis format datasets will be small enough that this step will not require signficant resources.
+
+\subsection{ReReconstruction}
+\label{ssec:rereco}
+
+When the integrated improvements in the calibrations and the reconstruction algorithms warrant it, the data will be reprocessed from raw data.
+We expect to do this for the Run~1 data and once or twice during the long shutdown.
+In the following years we expect to do it once per year, after the year is complete.
+
+\subsection{Reconstruction of Simulated Events}
+\label{ssec:recoofsim}
+
+\red{Do we want a section on this?  It would just say that we will do "the same", skipping steps that don't make sense on sim events.}
+
+\subsection{FileFamilies}
+\label{ssec:filefamilies}

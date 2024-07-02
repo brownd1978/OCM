@@ -1,14 +1,21 @@
-\documentclass{webofc}
+\documentclass[onecolumn]{webofc}
 \usepackage[varg]{txfonts}   % Web of Conferences font
+\usepackage{float}
+\usepackage{comment}
+\usepackage[pdftex,bookmarks]{hyperref}
+\usepackage[hyperref]{backref}
 
-
-
-\input{draftconfig}         % Enable additional annotations for draft mode.
-\newcommand{\ISDRAFT}{YES}  % Tell conditional formating that this is a draft.
+\usepackage{fancyhdr}
+\setlength{\footskip}{24pt}
+\pagestyle{fancy}
+\fancyhf{} % clear existing header/footer entries
+\fancyfoot[C]{\thepage }
 
 \graphicspath{{figures/}}
-\input{defs}
 
+
+\input{common/draftconfig}         % Enable additional annotations for draft mode.
+\input{common/defs}
 
 
 \begin{document}
@@ -17,53 +24,51 @@
 \input{sections/abstract}
 
 \maketitle
-\input{sections/mu2eexp}
-\input{sections/mu2eorg}
-\input{sections/runplan}
+\newpage
+\tableofcontents
+
+\clearpage
+\input{sections/introduction}
+\clearpage
+\input{sections/organization}
+\clearpage
 \input{sections/overview}
+\clearpage
+\input{sections/daq}
+\clearpage
 \input{sections/datahandling}
+\clearpage
+\input{sections/dataprocessing}
+\clearpage
 \input{sections/simulation}
+\clearpage
 \input{sections/reconstruction}
+\clearpage
 \input{sections/calibration}
-\input{sections/monitoring}
+\clearpage
 \input{sections/analysis}
-
+\clearpage
+\input{sections/display}
+\clearpage
 \input{sections/databases}
+\clearpage
 \input{sections/codemanagement}
+\clearpage
 \input{sections/datamanagement}
+\clearpage
+\input{sections/monitoring}
+\clearpage
 \input{sections/communication}
+\clearpage
+\input{sections/documentation}
+%\clearpage
+%\input{sections/resources}
 
-\input{sections/resources}
+%\appendix
+%\input{appendices/timeline}
+%\input{appendices/reqs} % this is temporary for reference only
+%\input{appendices/todo} % temporary
 
-Where should we describe the harvesting of online data?
-
-\appendix
-\input{appendices/timeline}
-\input{appendices/daq}
-\input{appendices/reqs} % this is temporary for reference only
-\input{appendices/todo} % temporary
-
-%
-% BibTeX or Biber users please use (the style is already called in the class, ensure that the "woc.bst" style is in your local directory)
-% \bibliography{name or your bibliography database}
-%
-% Non-BibTeX users please use
-%
-\begin{thebibliography}{}
-%
-% and use \bibitem to create references.
-%
-%\bibitem{RefJ}
-% Format for Journal Reference
-%Journal Author, Journal \textbf{Volume}, page numbers (year)
-% Format for books
-%\bibitem{RefB}
-%Book Author, \textit{Book title} (Publisher, place, year) page numbers
-\bibitem{Mu2e} Mu2e Technical Design report
-\end{thebibliography}
-
+\clearpage
+\bibliography{common/references}
 \end{document}
-
-% end of file template.tex
-
-<div id='footer'><table width='100%'><tr><td class='right'><a href='http://fusioninventory.org/'><span class='copyright'>FusionInventory 9.1+1.0 | copyleft <img src='/glpi/plugins/fusioninventory/pics/copyleft.png'/>  2010-2016 by FusionInventory Team</span></a></td></tr></table></div>
